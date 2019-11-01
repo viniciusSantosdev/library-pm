@@ -1,16 +1,18 @@
 package br.com.etecmatao.biblioteca
 
-import android.annotation.SuppressLint
-import android.os.AsyncTask
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.View
-import br.com.etecmatao.biblioteca.data.BibliotecaDatabase
-import br.com.etecmatao.biblioteca.model.Usuario
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.workDataOf
+import br.com.etecmatao.biblioteca.worker.SaveUserWorker
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
-import java.lang.Exception
+
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -20,7 +22,7 @@ class RegisterActivity : AppCompatActivity() {
     lateinit var campoSenha: TextInputEditText
     lateinit var campoConfirmaSenha: TextInputEditText
 
-    lateinit var fields:Array<TextInputEditText>
+    lateinit var fields: Array<TextInputEditText>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,19 +37,19 @@ class RegisterActivity : AppCompatActivity() {
         fields = arrayOf(campoNome, campoEmail, campoTelefone, campoSenha, campoConfirmaSenha)
     }
 
-    fun validar():Boolean{
+    fun validar(): Boolean {
         var error = false
 
         for (field in fields) {
             field.error = null
 
-            if (TextUtils.isEmpty(field.text.toString())){
+            if (TextUtils.isEmpty(field.text.toString())) {
                 field.error = resources.getString(R.string.msg_required_field)
                 error = true
             }
         }
 
-        if (!TextUtils.equals(campoSenha.text.toString(), campoConfirmaSenha.text.toString())){
+        if (!TextUtils.equals(campoSenha.text.toString(), campoConfirmaSenha.text.toString())) {
             campoConfirmaSenha.error = resources.getString(R.string.msg_password_different)
             error = true
         }
@@ -55,27 +57,39 @@ class RegisterActivity : AppCompatActivity() {
         return !error
     }
 
-    fun salvar(v:View){
+    fun salvar(v: View) {
         if (!validar()) {
             return
         }
 
-        var senha = Usuario.generateHash(campoSenha.text.toString())
-
-        var usuario = Usuario(
-            null,
-            campoNome.text.toString(),
-            campoEmail.text.toString(),
-            campoTelefone.text.toString(),
-            senha
+        val input = workDataOf(
+            "nome" to campoNome.text.toString(),
+            "email" to campoEmail.text.toString(),
+            "telefone" to campoTelefone.text.toString(),
+            "senha" to campoSenha.text.toString()
         )
 
-        val task = @SuppressLint("StaticFieldLeak")
-        object : AsyncTask<Usuario, Void, Void?>() {
-            override fun doInBackground(vararg usuario: Usuario?): Void? {
+        var request = OneTimeWorkRequestBuilder<SaveUserWorker>()
+            .setInputData(input)
+            .build()
 
+        var resultObserver = Observer<WorkInfo> {
+            if (it == null){
+                return@Observer
             }
 
+            if (it.state == WorkInfo.State.SUCCEEDED || it.state == WorkInfo.State.FAILED){
+                Snackbar.make(
+                    this.window.decorView,
+                    it.outputData.getString("result")!!,
+                    Snackbar.LENGTH_LONG
+                ).show()
+            }
         }
+
+
+        val workManager = WorkManager.getInstance(this)
+        workManager.enqueue(request)
+        workManager.getWorkInfoByIdLiveData(request.id).observe(this, resultObserver)
     }
 }

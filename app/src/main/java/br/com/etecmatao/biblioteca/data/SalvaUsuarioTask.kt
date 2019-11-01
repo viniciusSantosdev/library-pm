@@ -23,8 +23,5 @@ class SalvaUsuarioTask(var context:Context):AsyncTask<Usuario, Void, String>(){
         return ""
     }
 
-    override fun onPostExecute(result: String?) {
-        Snackbar.make(context., result, Snackbar.LENGTH_SHORT).show()
-    }
 
 }
