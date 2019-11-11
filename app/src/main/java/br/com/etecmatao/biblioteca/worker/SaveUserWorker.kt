@@ -20,7 +20,7 @@ class SaveUserWorker(var ctx: Context, params: WorkerParameters):Worker(ctx, par
                 Usuario.generateHash(inputData.getString("senha")!!)
             )
 
-            BibliotecaDatabase.getInstance(ctx)!!.UsuarioDao().insert(user)
+            BibliotecaDatabase.getInstance(ctx)!!.usuarioDao().insert(user)
 
             val result = ctx.resources.getString(R.string.msg_user_registered, user.nome)
             val out = workDataOf("result" to result)

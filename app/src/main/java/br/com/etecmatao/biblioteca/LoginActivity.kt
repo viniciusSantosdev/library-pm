@@ -1,5 +1,6 @@
 package br.com.etecmatao.biblioteca
 
+import android.app.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -69,7 +70,23 @@ class LoginActivity : AppCompatActivity() {
                 return@Observer
             }
 
-            if (it.state == WorkInfo.State.SUCCEEDED || it.state == WorkInfo.State.FAILED){
+            if (it.state == WorkInfo.State.SUCCEEDED){
+                val jsonUser = it.outputData.getString("jsonUser")
+
+                Snackbar.make(
+                    this.window.decorView,
+                    it.outputData.getString("msg")!!,
+                    Snackbar.LENGTH_INDEFINITE
+                ).setAction(R.string.btn_ok) {
+                    intent = LoginActivity@this.intent
+                    intent.putExtra("jsonUser", jsonUser)
+
+                    LoginActivity@this.setResult(Activity.RESULT_OK, intent)
+                    LoginActivity@this.finish()
+                }.show()
+            }
+
+            if (it.state == WorkInfo.State.FAILED){
                 Snackbar.make(
                     this.window.decorView,
                     it.outputData.getString("msg")!!,

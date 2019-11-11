@@ -8,7 +8,7 @@ import br.com.etecmatao.biblioteca.model.Usuario
 
 @Database(entities = [(Usuario::class)], version = 1)
 abstract class BibliotecaDatabase : RoomDatabase() {
-    abstract fun UsuarioDao(): UsuarioDao
+    abstract fun usuarioDao(): UsuarioDao
 
     companion object {
         private var INSTANCE: BibliotecaDatabase? = null
